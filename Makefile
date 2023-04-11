@@ -71,6 +71,10 @@ build:
 	$(GOBUILD) $(PKG)/cmd/findcheckpoint
 	$(GOBUILD) $(PKG)/cmd/addblock
 
+
+push-btcd:
+	docker buildx build --platform linux/amd64 --push -f Dockerfile --build-arg COMMIT=`git rev-parse --short HEAD` -t gcr.io/analog-stage-198105/staging:btcd-`git rev-parse --short HEAD` .
+
 # =======
 # TESTING
 # =======
