@@ -10,9 +10,9 @@ import (
 	"encoding/json"
 
 	"github.com/btcsuite/btcd/btcjson"
+	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/btcsuite/btcd/btcutil"
 )
 
 const (
@@ -143,6 +143,29 @@ func (r FutureGetRawTransactionVerboseResult) Receive() (*btcjson.TxRawResult, e
 	return &rawTxResult, nil
 }
 
+// FutureGetRawTransactionVerboseV2Result is a future promise to deliver the
+// result of a GetRawTransactionVerboseAsync RPC invocation (or an applicable
+// error).
+type FutureGetRawTransactionVerboseV2Result chan *Response
+
+// Receive waits for the Response promised by the future and returns information
+// about a transaction given its hash.
+func (r FutureGetRawTransactionVerboseV2Result) Receive() (*btcjson.TxRawResultV2, error) {
+	res, err := ReceiveFuture(r)
+	if err != nil {
+		return nil, err
+	}
+
+	// Unmarshal result as a gettrawtransaction result object.
+	var rawTxResult btcjson.TxRawResultV2
+	err = json.Unmarshal(res, &rawTxResult)
+	if err != nil {
+		return nil, err
+	}
+
+	return &rawTxResult, nil
+}
+
 // GetRawTransactionVerboseAsync returns an instance of a type that can be used
 // to get the result of the RPC at some future time by invoking the Receive
 // function on the returned instance.
@@ -164,6 +187,29 @@ func (c *Client) GetRawTransactionVerboseAsync(txHash *chainhash.Hash) FutureGet
 // See GetRawTransaction to obtain only the transaction already deserialized.
 func (c *Client) GetRawTransactionVerbose(txHash *chainhash.Hash) (*btcjson.TxRawResult, error) {
 	return c.GetRawTransactionVerboseAsync(txHash).Receive()
+}
+
+// GetRawTransactionVerboseV2Async returns an instance of a type that can be used
+// to get the result of the RPC at some future time by invoking the Receive
+// function on the returned instance.
+//
+// See GetRawTransactionVerbose for the blocking version and more details.
+func (c *Client) GetRawTransactionVerboseV2Async(txHash *chainhash.Hash) FutureGetRawTransactionVerboseV2Result {
+	hash := ""
+	if txHash != nil {
+		hash = txHash.String()
+	}
+
+	cmd := btcjson.NewGetRawTransactionCmd(hash, btcjson.Int(1))
+	return c.SendCmd(cmd)
+}
+
+// GetRawTransactionVerboseV2 returns information about a transaction given
+// its hash.
+//
+// See GetRawTransaction to obtain only the transaction already deserialized.
+func (c *Client) GetRawTransactionVerboseV2(txHash *chainhash.Hash) (*btcjson.TxRawResultV2, error) {
+	return c.GetRawTransactionVerboseV2Async(txHash).Receive()
 }
 
 // FutureDecodeRawTransactionResult is a future promise to deliver the result
