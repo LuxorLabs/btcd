@@ -90,6 +90,10 @@ const (
 	// requestRetryInterval is the initial amount of time to wait in between
 	// retries when sending HTTP POST requests.
 	requestRetryInterval = time.Millisecond * 500
+
+	// maxPostRequestWorkers is the maximum number of concurrent
+	// post request workers.
+	maxPostRequestWorkers = 128
 )
 
 // jsonRequest holds information about a json request that is used to properly
@@ -184,6 +188,9 @@ type Client struct {
 	disconnect      chan struct{}
 	shutdown        chan struct{}
 	wg              sync.WaitGroup
+
+	// Concurrent post request workers.
+	workers chan struct{}
 }
 
 // NextID returns the next id to be used when sending a JSON-RPC message.  This
@@ -893,7 +900,13 @@ out:
 		// is closed.
 		select {
 		case jReq := <-c.sendPostChan:
-			c.handleSendPostMessage(jReq, c.shutdown)
+			// Limit the number of outstanding send requests to prevent exceeding
+			// the node's work queue limit.
+			c.workers <- struct{}{}
+			go func() {
+				c.handleSendPostMessage(jReq, c.shutdown)
+				<-c.workers
+			}()
 
 		case <-c.shutdown:
 			break out
@@ -1466,6 +1479,7 @@ func New(config *ConnConfig, ntfnHandlers *NotificationHandlers) (*Client, error
 		connEstablished: connEstablished,
 		disconnect:      make(chan struct{}),
 		shutdown:        make(chan struct{}),
+		workers:         make(chan struct{}, maxPostRequestWorkers),
 	}
 
 	// Default network is mainnet, no parameters are necessary but if mainnet
