@@ -81,7 +81,7 @@ type GetBlockVerboseResult struct {
 	Version       int32         `json:"version"`
 	VersionHex    string        `json:"versionHex"`
 	MerkleRoot    string        `json:"merkleroot"`
-	Tx            []string      `json:"tx,omitempty"`
+	Tx            []TxRawResult `json:"tx,omitempty"`
 	RawTx         []TxRawResult `json:"rawtx,omitempty"` // Note: this field is always empty when verbose != 2.
 	Time          int64         `json:"time"`
 	Nonce         uint32        `json:"nonce"`
@@ -709,20 +709,21 @@ type InfoChainResult struct {
 
 // TxRawResult models the data from the getrawtransaction command.
 type TxRawResult struct {
-	Hex           string `json:"hex"`
-	Txid          string `json:"txid"`
-	Hash          string `json:"hash,omitempty"`
-	Size          int32  `json:"size,omitempty"`
-	Vsize         int32  `json:"vsize,omitempty"`
-	Weight        int32  `json:"weight,omitempty"`
-	Version       uint32 `json:"version"`
-	LockTime      uint32 `json:"locktime"`
-	Vin           []Vin  `json:"vin"`
-	Vout          []Vout `json:"vout"`
-	BlockHash     string `json:"blockhash,omitempty"`
-	Confirmations uint64 `json:"confirmations,omitempty"`
-	Time          int64  `json:"time,omitempty"`
-	Blocktime     int64  `json:"blocktime,omitempty"`
+	Hex           string  `json:"hex"`
+	Txid          string  `json:"txid"`
+	Fee           float64 `json:"fee"`
+	Hash          string  `json:"hash,omitempty"`
+	Size          int32   `json:"size,omitempty"`
+	Vsize         int32   `json:"vsize,omitempty"`
+	Weight        int32   `json:"weight,omitempty"`
+	Version       uint32  `json:"version"`
+	LockTime      uint32  `json:"locktime"`
+	Vin           []Vin   `json:"vin"`
+	Vout          []Vout  `json:"vout"`
+	BlockHash     string  `json:"blockhash,omitempty"`
+	Confirmations uint64  `json:"confirmations,omitempty"`
+	Time          int64   `json:"time,omitempty"`
+	Blocktime     int64   `json:"blocktime,omitempty"`
 }
 
 // SearchRawTransactionsResult models the data from the searchrawtransaction
